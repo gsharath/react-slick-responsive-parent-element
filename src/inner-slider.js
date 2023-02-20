@@ -77,7 +77,7 @@ export class InnerSlider extends React.Component {
     if (this.props.lazyLoad === "progressive") {
       this.lazyLoadTimer = setInterval(this.progressiveLazyLoad, 1000);
     }
-    this.ro = new ResizeObserver(() => {
+    this.ro = new ResizeObserver(entries => {
       if (this.state.animating) {
         this.onWindowResized(false); // don't set trackStyle hence don't break animation
         this.callbackTimers.push(
@@ -85,6 +85,11 @@ export class InnerSlider extends React.Component {
         );
       } else {
         this.onWindowResized();
+      }
+      // find the relevant observed target
+      const listEntry = entries.find(entry => entry.target === this.list);
+      if (listEntry) {
+        this.props.onResize && this.props.onResize(listEntry.contentRect);
       }
     });
     this.ro.observe(this.list);
@@ -304,7 +309,8 @@ export class InnerSlider extends React.Component {
   };
   checkImagesLoad = () => {
     let images =
-      (this.list && this.list.querySelectorAll &&
+      (this.list &&
+        this.list.querySelectorAll &&
         this.list.querySelectorAll(".slick-slide img")) ||
       [];
     let imagesCount = images.length,
@@ -316,7 +322,7 @@ export class InnerSlider extends React.Component {
         image.onclick = () => image.parentNode.focus();
       } else {
         const prevClickHandler = image.onclick;
-        image.onclick = (e) => {
+        image.onclick = e => {
           prevClickHandler(e);
           image.parentNode.focus();
         };
